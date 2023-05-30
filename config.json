@@ -1,0 +1,8 @@
+{
+    "path": "/mnt/usbdrive/pictures/Camera1/",
+    "threshold": 0.02,
+    "pixel_treshold": 10,
+    "webstream": false,
+    "port": 8080,
+    "capture_device": 0
+}
