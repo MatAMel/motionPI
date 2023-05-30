@@ -1,7 +1,7 @@
 // TODO: Mark each image with the time in the corner
 //       Create videos from images with ffmpeg?
 //       DONE: Create config file with all configs and not hardcoded in this file
-//       Create git-repo
+//       DONE Create git-repo
 //       DONE: Create webserver to watch livestream
 
 #pragma once
