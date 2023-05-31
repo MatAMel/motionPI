@@ -19,7 +19,7 @@ Config parse_config() {
     std::ifstream file("../config/config.json");
 
     if (!file) {
-        std::cerr << "Unable to open file data.json";
+        std::cerr << "Unable to open file ../config/config.json";
         exit(-1);
     }
 

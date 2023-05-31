@@ -1,7 +1,7 @@
-// TODO: Mark each image with the time in the corner
+// TODO: DONE: Mark each image with the time in the corner
 //       Create videos from images with ffmpeg?
 //       DONE: Create config file with all configs and not hardcoded in this file
-//       DONE Create git-repo
+//       DONE: Create git-repo
 //       DONE: Create webserver to watch livestream
 
 #pragma once
@@ -9,7 +9,6 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
-#include "color_output.hpp"
 #include "json.hpp"
 #include "mjpeg_streamer.hpp" // for the webserver
 #include "config.hpp"
@@ -26,6 +25,7 @@
 #define DATE 1
 #define TIME 2
 #define DATE_AND_TIME 3
+#define MARK_IMAGE 4 // dateformat for marking images
 
 typedef cv::Vec3b pixel;
 using MJPEGStreamer = nadjieb::MJPEGStreamer;
@@ -42,16 +42,18 @@ void get_video_stream();
 std::string get_date(int date_format);
 void save_image(cv::Mat& image, Config& config);
 void signal_handler(int signum);
+void mark_image(cv::Mat& image, std::string text);
 
 
 void get_video_stream()
 {
     // if SIGTERM signal, go to signal_handler and clean up (systemctl restart ex.)
     signal(SIGTERM, signal_handler);
+    signal(SIGINT, signal_handler); // for ctrl+c
     
     if(!cap.isOpened())
     {
-        std::cerr << "Could not open cv::VideoCapture cap" << std::endl;
+        std::cerr << "Could not open cv::VideoCapture cap with index " << std::to_string(config.capture_device) << std::endl;
         exit(-1);
     }
 
@@ -127,6 +129,7 @@ void save_image(cv::Mat& image, Config& config)
     std::string date = get_date(DATE);
     std::string time = get_date(TIME);
     std::string date_and_time = get_date(DATE_AND_TIME);
+    std::string mark_image_time = get_date(MARK_IMAGE);
 
     std::string base_dir = config.path;
     std::string date_dir = base_dir + date;
@@ -137,7 +140,7 @@ void save_image(cv::Mat& image, Config& config)
     std::filesystem::create_directories(time_dir);
 
     // Mark image with date and time in bottom right
-    mark_image(image, date_and_time);
+    mark_image(image, mark_image_time);
 
     // Save image
     cv::imwrite(filename, image);
@@ -146,15 +149,32 @@ void save_image(cv::Mat& image, Config& config)
 void mark_image(cv::Mat& image, std::string text)
 {
     int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-    double fontScale = 1.0;
-    cv::Scalar color = cv::Scalar(0, 0, 0); // white color
+    double fontScale = 0.5;
+    cv::Scalar color = cv::Scalar(255, 255, 255); // white color
     int thickness = 2;
-    int lineType = cv::LINE_8;
+    int lineType = cv::LINE_AA;
     bool bottomLeftOrigin = false;
     int baseline = 0;
-    cv::Size textSize = cv::getTextSize(text, fontFace, fontScale, thickness, &baseline);
-    cv::Point textOrg(image.cols - textSize.width, image.rows - baseline);
-    cv::putText(image, text, textOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+
+    // Extract date and time from text
+    std::string date = text.substr(0, 10);
+    std::string time = text.substr(11, 8);
+
+    // Calculate text size for date and time
+    cv::Size dateSize = cv::getTextSize(date, fontFace, fontScale, thickness, &baseline);
+    cv::Size timeSize = cv::getTextSize(time, fontFace, fontScale, thickness, &baseline);
+
+    // calculate position
+    cv::Point dateOrg(image.cols - dateSize.width - 6, image.rows - dateSize.height - 16);
+    cv::Point timeOrg(image.cols - timeSize.width - 6, image.rows - timeSize.height + dateSize.height - 9);
+
+    // draw date
+    cv::putText(image, date, dateOrg, fontFace, fontScale, cv::Scalar(0, 0, 0), thickness + 2, lineType, bottomLeftOrigin);
+    cv::putText(image, date, dateOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+
+    // draw time
+    cv::putText(image, time, timeOrg, fontFace, fontScale, cv::Scalar(0, 0, 0), thickness + 2, lineType, bottomLeftOrigin);
+    cv::putText(image, time, timeOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
 }
 
 
@@ -180,6 +200,8 @@ std::string get_date(int date_format)
         ss << std::put_time(&buf, "%Y-%m-%d-%H-%M-%S");
         ss << '-' << std::setfill('0') << std::setw(3) << fraction.count() * 1000; // adding milliseconds
     }
+    else if( date_format == MARK_IMAGE )
+        ss << std::put_time(&buf, "%Y-%m-%d %H:%M:%S");
     
     return ss.str();
 }
@@ -189,5 +211,5 @@ void signal_handler(int signum)
 {
     streamer.stop();
     cap.release();
-    exit(-1);
+    exit(signum);
 }
