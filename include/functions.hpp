@@ -34,7 +34,7 @@ using MJPEGStreamer = nadjieb::MJPEGStreamer;
 Config config = parse_config();
 cv::VideoCapture cap(config.capture_device);
 MJPEGStreamer streamer;
-std::vector<int> params;
+std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 90};
 
 // function prototypes
 int compare_images(cv::Mat& image1, cv::Mat& image2, double threshold, int pixel_treshold);
@@ -62,20 +62,15 @@ void get_video_stream()
     int diff;
 
     if(config.webstream) // if set in the config file, start the webstream
-    {
-        params = {cv::IMWRITE_JPEG_QUALITY, 90};
         streamer.start(config.port);
-    }
 
     while(1)
     {
         cap >> frame;
+
         if(frame.empty())
-        {
-            std::cerr << "Frame is empty" << std::endl;
-            exit(-1);
-        }
- 
+            continue;
+        
         if(prev_frame.empty())
             prev_frame = frame.clone();
         
