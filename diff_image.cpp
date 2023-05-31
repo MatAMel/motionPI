@@ -3,7 +3,6 @@
 
 int main(int argc, char** argv)
 {
-    //Config config = parse_config();
     get_video_stream();
 }
 

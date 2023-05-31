@@ -136,9 +136,27 @@ void save_image(cv::Mat& image, Config& config)
     // Creating directories if they do not exist
     std::filesystem::create_directories(time_dir);
 
+    // Mark image with date and time in bottom right
+    mark_image(image, date_and_time);
+
     // Save image
     cv::imwrite(filename, image);
 }
+
+void mark_image(cv::Mat& image, std::string text)
+{
+    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+    double fontScale = 1.0;
+    cv::Scalar color = cv::Scalar(0, 0, 0); // white color
+    int thickness = 2;
+    int lineType = cv::LINE_8;
+    bool bottomLeftOrigin = false;
+    int baseline = 0;
+    cv::Size textSize = cv::getTextSize(text, fontFace, fontScale, thickness, &baseline);
+    cv::Point textOrg(image.cols - textSize.width, image.rows - baseline);
+    cv::putText(image, text, textOrg, fontFace, fontScale, color, thickness, lineType, bottomLeftOrigin);
+}
+
 
 
 std::string get_date(int date_format)
