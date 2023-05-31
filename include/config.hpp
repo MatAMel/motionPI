@@ -16,7 +16,7 @@ struct Config {
 
 Config parse_config() {
     Config config;
-    std::ifstream file("config.json");
+    std::ifstream file("../config/config.json");
 
     if (!file) {
         std::cerr << "Unable to open file data.json";
