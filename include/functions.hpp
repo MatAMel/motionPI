@@ -83,7 +83,7 @@ void get_video_stream()
             // http://localhost:PORT/video
             std::vector<uchar> buff_bgr;
             cv::imencode(".jpg", frame, buff_bgr, params);
-            streamer.publish("/video", std::string(buff_bgr.begin(), buff_bgr.end()));
+            streamer.publish("/", std::string(buff_bgr.begin(), buff_bgr.end()));
         }
 
         prev_frame = frame.clone();  
